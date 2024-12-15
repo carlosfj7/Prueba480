@@ -10,7 +10,7 @@ security:
                 class: App\Entity\User
                 property: email
     firewalls:
-       login:
+        login:
             pattern: ^/api/login
             stateless: true
             json_login:
@@ -19,8 +19,9 @@ security:
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
 
         api:
-            pattern:   ^/api
+            pattern:   ^/
             stateless: true
+            provider: app_user_provider
             jwt: ~
 
         main:
@@ -41,6 +42,9 @@ security:
         - { path: ^/libro/update, roles: ROLE_USER }
         - { path: ^/libro/delete, roles: ROLE_USER }
         - { path: ^/user/delete, roles: ROLE_USER }
+        - { path: ^/user, roles: PUBLIC_ACCESS }
+        - { path: ^/libro, roles: PUBLIC_ACCESS }
+
 
 
 when@test:
