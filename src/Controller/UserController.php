@@ -14,7 +14,7 @@ use App\Repository\UserRepository;
 #[Route('/user', name: 'user')]
 class UserController extends AbstractController
 {
-    #[Route('/register', name: 'user_register')]
+    #[Route('/register', name: 'user_register', methods: ['POST'])]
     public function userRegister(Request $request, UserPasswordHasherInterface $passwordHasher,UserRepository $userRepository, EntityManagerInterface $em): Response
     {        
         //llamada
@@ -53,7 +53,7 @@ class UserController extends AbstractController
 
     }
 
-    #[Route('/get', name: 'user_get')]
+    #[Route('/get', name: 'user_get', methods: ['GET'])]
     public function getUsers(UserRepository $userRepository): Response
     {
         $users = $userRepository->findAll();
@@ -72,7 +72,7 @@ class UserController extends AbstractController
         return $this->json($userJson);
     }
 
-    #[Route('/delete', name: 'user_delete')]
+    #[Route('/delete', name: 'user_delete', methods: ['DELETE'])]
     public function deleteUsers(EntityManagerInterface $em,Request $request,UserRepository $userRepository): Response
     {
         $body = $request->getContent();

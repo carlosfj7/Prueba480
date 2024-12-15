@@ -13,7 +13,7 @@ use Doctrine\ORM\EntityManagerInterface;
 class LibroControllerTest extends WebTestCase
 {
     
-    public function testCreateLibro(): void
+    public function testCreateLibroValid(): void
     {
         $client = static::createClient();
         $client->request('POST', '/libro/create', [], [], [
@@ -30,6 +30,23 @@ class LibroControllerTest extends WebTestCase
         $this->assertJson($client->getResponse()->getContent());
         $response = json_decode($client->getResponse()->getContent(), true);
         $this->assertEquals('Libro creado correctamente', $response);
+
+    }
+    public function testCreateLibroInvalid(): void
+    {
+        $client = static::createClient();
+        $client->request('POST', '/libro/create', [], [], [
+            'CONTENT_TYPE' => 'application/json',
+        ], json_encode([
+            'titulo' => '1984',
+            'autor' => 'George Orwell',
+            'año_publicacion' => 1949
+        ]));
+
+        $this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+        $this->assertJson($client->getResponse()->getContent());
+        $response = json_decode($client->getResponse()->getContent(), true);
+        $this->assertEquals("El campo 'genero' no puede estar vacio", $response);
 
     }
 
@@ -119,14 +136,22 @@ class LibroControllerTest extends WebTestCase
         $this->assertEquals('Novela antigua', $updatedLibro->getGenero());
         $this->assertEquals(2023, $updatedLibro->getAñoPublicacion());
     }
+
+    
     public function testDeleteLibro(): void
     {
         $client = self::createClient();
         $em = self::getContainer()->get(EntityManagerInterface::class);
 
-        $libroId = 66;
-    
-        $libro = $em->getRepository(Libro::class)->find($libroId);
+        $libro = new Libro();
+        $libro->setTitulo('Libro to Remove');
+        $libro->setAutor('Autor');
+        $libro->setGenero('genero');
+        $libro->setAñoPublicacion(1605);
+        $em->persist($libro);
+        $em->flush();
+
+        $libroId = $libro->getId();
         $this->assertNotNull($libro); 
         $token = $this->getAuthToken($client);
         $client->request(
@@ -143,8 +168,45 @@ class LibroControllerTest extends WebTestCase
     
 
         $this->assertResponseIsSuccessful(); 
+        $this->assertResponseStatusCodeSame(Response::HTTP_OK);
         $deletedLibro = $em->getRepository(Libro::class)->find($libroId);
         $this->assertNull($deletedLibro); 
+    }
+
+    public function testDeleteLibroInvalidId(): void
+    {
+        $client = self::createClient();
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+
+        $libro = new Libro();
+        $libro->setTitulo('Libro to Remove');
+        $libro->setAutor('Autor');
+        $libro->setGenero('genero');
+        $libro->setAñoPublicacion(1605);
+        $em->persist($libro);
+        $em->flush();
+
+        $libroId = 999999;
+        $this->assertNotNull($libro); 
+        $token = $this->getAuthToken($client);
+        $client->request(
+            'DELETE', 
+            "/libro/delete",
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json',
+            'HTTP_AUTHORIZATION' => "Bearer {$token}",
+            
+            ],json_encode(["id"=>$libroId])
+           
+        );
+    
+        
+        $this->assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
+        $this->assertJson($client->getResponse()->getContent());
+        $response = json_decode($client->getResponse()->getContent(), true);
+        $this->assertEquals('Libro no encontrado', $response);
+        
     }
 
 
